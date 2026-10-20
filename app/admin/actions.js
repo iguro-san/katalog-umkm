@@ -65,3 +65,41 @@ export async function gantiPasswordAdmin(prevState, formData) {
 
   return { success: "Password berhasil diperbarui." };
 }
+
+export async function tambahProduk(formData) {
+  const supabase = await createClient();
+
+  // Memeriksa apakah admin sudah login di server (Aturan Keamanan #3)
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    redirect("/admin/login");
+  }
+
+  const nama = formData.get("nama");
+  const harga = parseInt(formData.get("harga"), 10) || 0;
+  const kategori = formData.get("kategori") || "";
+  const foto_url = formData.get("foto_url") || "";
+  const deskripsi = formData.get("deskripsi") || "";
+
+  const { error } = await supabase.from("produk").insert([
+    {
+      nama,
+      harga,
+      kategori,
+      foto_url,
+      deskripsi,
+    },
+  ]);
+
+  if (error) {
+    throw new Error("Gagal menambah produk: " + error.message);
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/");
+  redirect("/admin");
+}
